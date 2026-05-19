@@ -21,7 +21,7 @@ install, no separate daemon to manage.
 ## When LSP runs
 
 LSP is gated on **git workspace detection**. When the agent's working
-directory (or the file being edited) is inside a git worktree, LSP
+directory (or the file being edited) is inside a git repository, LSP
 runs against that workspace. When neither is in a git repo, LSP
 stays dormant — useful for messaging gateways where the cwd is the
 user's home directory and there's no project to diagnose.
@@ -91,6 +91,13 @@ For "manual" entries, install the server through whatever toolchain
 manager makes sense for that language (rustup, ghcup, opam, brew,
 …). Hermes auto-detects the binary on PATH or in
 `<HERMES_HOME>/lsp/bin/`.
+
+A few servers are installed alongside a peer dependency that npm
+won't auto-pull. The current case is `typescript-language-server`,
+which requires the `typescript` SDK importable from the same
+`node_modules` tree — Hermes installs both packages together when you
+run `hermes lsp install typescript` or auto-install fires on first
+use.
 
 ## CLI
 
@@ -207,6 +214,24 @@ The binary isn't on PATH and isn't in `<HERMES_HOME>/lsp/bin/`. Run
 `hermes lsp install <server_id>` to attempt an auto-install, or
 install the binary manually through the language's normal toolchain.
 
+**`Backend warnings` section in `hermes lsp status`**
+
+Some servers ship as thin wrappers around an external CLI for actual
+diagnostics — they spawn cleanly and accept requests but never emit
+errors when the sidecar binary is missing. The most common case is
+`bash-language-server`, which delegates diagnostics to `shellcheck`.
+When `hermes lsp status` shows a `Backend warnings` section, install
+the named tool through your OS package manager:
+
+```
+apt install shellcheck      # Debian / Ubuntu
+brew install shellcheck     # macOS
+scoop install shellcheck    # Windows
+```
+
+The same warning is logged once at server spawn time in
+`~/.hermes/logs/agent.log`.
+
 **Server starts but never returns diagnostics**
 
 Check `~/.hermes/logs/agent.log` for `[agent.lsp.client]` entries —
@@ -224,5 +249,6 @@ the next edit re-spawns.
 
 **Editing a file outside any git repo**
 
-By design, LSP only runs inside git worktrees. Run `git init` in the
-project, or accept the in-process syntax-only fallback.
+By design, LSP only runs inside a git repository. If the project isn't
+yet initialized, run `git init` to enable LSP diagnostics. Otherwise the
+in-process syntax-only fallback applies.
