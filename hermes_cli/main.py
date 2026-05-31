@@ -1269,7 +1269,6 @@ _TUI_BUILD_INPUT_FILES = (
     "babel.compiler.config.cjs",
     "scripts/build.mjs",
     "packages/hermes-ink/package.json",
-    "packages/hermes-ink/package-lock.json",
     "packages/hermes-ink/index.js",
     "packages/hermes-ink/text-input.js",
 )
@@ -6602,7 +6601,6 @@ def _web_ui_build_needed(web_dir: Path) -> bool:
                     return True
     for meta in (
         "package.json",
-        "package-lock.json",
         "yarn.lock",
         "pnpm-lock.yaml",
         "vite.config.ts",
@@ -6611,6 +6609,10 @@ def _web_ui_build_needed(web_dir: Path) -> bool:
         mp = web_dir / meta
         if mp.exists() and mp.stat().st_mtime > dist_mtime:
             return True
+    # Workspace root lockfile (single package-lock.json covers all workspaces).
+    root_lock = project_root / "package-lock.json"
+    if root_lock.exists() and root_lock.stat().st_mtime > dist_mtime:
+        return True
     return False
 
 
