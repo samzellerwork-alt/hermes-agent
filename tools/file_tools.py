@@ -147,21 +147,27 @@ def _is_blocked_device_path(path: str) -> bool:
     return False
 
 
-def _is_blocked_device(filepath: str) -> bool:
+def _is_blocked_device(filepath: str, task_id: str = "default") -> bool:
     """Return True if the path would hang the process (infinite output or blocking input).
 
     Check the literal path first so aliases like /dev/stdin are caught before
-    they resolve to terminal-specific paths. Then check the resolved path so a
-    workspace symlink to /dev/zero cannot bypass the guard.
+    they resolve to terminal-specific paths. Then check the task-cwd-resolved
+    path so a workspace symlink to /dev/zero cannot bypass the guard.
     """
     normalized = os.path.expanduser(filepath)
     if _is_blocked_device_path(normalized):
         return True
     try:
-        resolved = os.path.realpath(normalized)
+        task_resolved = str(_resolve_path_for_task(normalized, task_id))
+    except (OSError, RuntimeError, ValueError):
+        return False
+    if _is_blocked_device_path(task_resolved):
+        return True
+    try:
+        task_realpath = os.path.realpath(task_resolved)
     except (OSError, ValueError):
         return False
-    if resolved != normalized and _is_blocked_device_path(resolved):
+    if task_realpath != task_resolved and _is_blocked_device_path(task_realpath):
         return True
     return False
 
@@ -627,7 +633,7 @@ def read_file_tool(path: str, offset: int = 1, limit: int = 500, task_id: str = 
         # ── Device path guard ─────────────────────────────────────────
         # Block paths that would hang the process (infinite output,
         # blocking on input).  Pure path check — no I/O.
-        if _is_blocked_device(path):
+        if _is_blocked_device(path, task_id):
             return json.dumps({
                 "error": (
                     f"Cannot read '{path}': this is a device file that would "

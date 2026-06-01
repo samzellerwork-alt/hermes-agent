@@ -64,6 +64,23 @@ def test_code_write_guard_classifies_non_product_artifacts(monkeypatch, tmp_path
     assert not file_tools._is_code_write_path(path)
 
 
+def test_blocked_device_detects_relative_symlink_from_terminal_cwd(
+    monkeypatch, tmp_path
+):
+    import tools.file_tools as file_tools
+
+    terminal_cwd = tmp_path / "terminal"
+    process_cwd = tmp_path / "process"
+    terminal_cwd.mkdir()
+    process_cwd.mkdir()
+    (terminal_cwd / "link").symlink_to("/dev/zero")
+
+    monkeypatch.setenv("TERMINAL_CWD", str(terminal_cwd))
+    monkeypatch.chdir(process_cwd)
+
+    assert file_tools._is_blocked_device("link")
+
+
 def test_code_write_guard_blocks_python_write_when_config_enabled(monkeypatch, tmp_path):
     import tools.file_tools as file_tools
 
