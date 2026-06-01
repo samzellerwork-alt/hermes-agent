@@ -52,8 +52,10 @@ _HERMES_CORE_TOOLS = [
     "session_search",
     # Clarifying questions
     "clarify",
+    # Evidence-gated completion/result writing
+    "evidence_gate",
     # Code execution + delegation
-    "execute_code", "delegate_task",
+    "execute_code", "delegate_task", "delegate_to_codex",
     # Cronjob management
     "cronjob",
     # Cross-platform messaging (gated on gateway running via check_fn)
@@ -233,6 +235,12 @@ TOOLSETS = {
         "tools": ["clarify"],
         "includes": []
     },
+
+    "evidence_gate": {
+        "description": "Evidence-gated RESULT.md writing and completion refusal logging",
+        "tools": ["evidence_gate"],
+        "includes": []
+    },
     
     "code_execution": {
         "description": "Run Python scripts that call tools programmatically (reduces LLM round trips)",
@@ -243,6 +251,12 @@ TOOLSETS = {
     "delegation": {
         "description": "Spawn subagents with isolated context for complex subtasks",
         "tools": ["delegate_task"],
+        "includes": []
+    },
+
+    "codex": {
+        "description": "Delegate code-writing work to the local Codex CLI via codex exec",
+        "tools": ["delegate_to_codex"],
         "includes": []
     },
 
